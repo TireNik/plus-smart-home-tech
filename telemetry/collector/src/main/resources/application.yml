@@ -1,14 +1,13 @@
 server:
   port: 8080
-# Kafka
+
 kafka:
-  bootstrap_server: localhost:9092
+  bootstrap_server: kafka:29092
   topics:
     sensor_events_topic: telemetry.sensors.v1
     hub_events_topic: telemetry.hubs.v1
   key_serialize_class: org.apache.kafka.common.serialization.StringSerializer
-  value_serialize_class: ru.yandex.practicum.kafka.AvroSerializer
-
+  value_serialize_class: io.confluent.kafka.serializers.KafkaAvroSerializer
 
 logging:
   level:
