@@ -1,7 +1,6 @@
 package ru.yandex.practicum.controller;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import ru.yandex.practicum.service.EventService;
 import ru.yandex.practicum.model.HubEvent;
 import ru.yandex.practicum.model.SensorEvent;
