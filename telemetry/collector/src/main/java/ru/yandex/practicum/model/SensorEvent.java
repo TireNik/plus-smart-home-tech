@@ -39,6 +39,5 @@ public abstract class SensorEvent {
     Instant timestamp = Instant.now();
 
     @NotNull
-    @JsonProperty("type")
     public abstract SensorEventType getType();
 }

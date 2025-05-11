@@ -8,29 +8,25 @@ import ru.yandex.practicum.dto.sensor.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.model.SensorEvent;
 
-import java.time.Instant;
 
 @Mapper(componentModel = "spring")
 public interface SensorEventMapper {
 
-    @Mapping(target = "payload", source = ".", qualifiedByName = "mapClass")
+    @Mapping(target = "event", source = ".", qualifiedByName = "mapClass")
     SensorEventAvro mapToAvro(SensorEvent event);
 
     @Named("mapClass")
-    @SubclassMapping(source = ClimateSensorEvent.class, target = ClimateSensorAvro.class)
-    @SubclassMapping(source = LightSensorEvent.class, target = LightSensorAvro.class)
-    @SubclassMapping(source = MotionSensorEvent.class, target = MotionSensorAvro.class)
-    @SubclassMapping(source = SwitchSensorEvent.class, target = SwitchSensorAvro.class)
-    @SubclassMapping(source = TemperatureSensorEvent.class, target = TemperatureSensorAvro.class)
+    @SubclassMapping(source = ClimateSensorEvent.class, target = ClimateSensorEventAvro.class)
+    @SubclassMapping(source = LightSensorEvent.class, target = LightSensorEventAvro.class)
+    @SubclassMapping(source = MotionSensorEvent.class, target = MotionSensorEventAvro.class)
+    @SubclassMapping(source = SwitchSensorEvent.class, target = SwitchSensorEventAvro.class)
+    @SubclassMapping(source = TemperatureSensorEvent.class, target = TemperatureSensorEventAvro.class)
     Object mapClass(SensorEvent event);
 
-    ClimateSensorAvro mapToAvro(ClimateSensorEvent event);
-    LightSensorAvro mapToAvro(LightSensorEvent event);
-    MotionSensorAvro mapToAvro(MotionSensorEvent event);
-    SwitchSensorAvro mapToAvro(SwitchSensorEvent event);
-    TemperatureSensorAvro mapToAvro(TemperatureSensorEvent event);
+    ClimateSensorEventAvro mapToAvro(ClimateSensorEvent event);
+    LightSensorEventAvro mapToAvro(LightSensorEvent event);
+    MotionSensorEventAvro mapToAvro(MotionSensorEvent event);
+    SwitchSensorEventAvro mapToAvro(SwitchSensorEvent event);
+    TemperatureSensorEventAvro mapToAvro(TemperatureSensorEvent event);
 
-    default long instantToLong(Instant value) {
-        return value.toEpochMilli();
-    }
 }

@@ -11,12 +11,11 @@ import ru.yandex.practicum.dto.hub.ScenarioRemovedEvent;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.model.HubEvent;
 
-import java.time.Instant;
 
 @Mapper(componentModel = "spring")
 public interface HubEventMapper {
 
-    @Mapping(target = "payload", source = ".", qualifiedByName = "mapClass")
+    @Mapping(target = "event", source = ".", qualifiedByName = "mapClass")
     HubEventAvro mapToAvro(HubEvent event);
 
     @Named("mapClass")
@@ -26,7 +25,6 @@ public interface HubEventMapper {
     @SubclassMapping(source = ScenarioRemovedEvent.class, target = ScenarioRemovedEventAvro.class)
     Object mapClass(HubEvent event);
 
-    @Mapping(target = "type", source = "deviceType")
     DeviceAddedEventAvro mapToAvro(DeviceAddedEvent event);
 
     DeviceRemovedEventAvro mapToAvro(DeviceRemovedEvent event);
@@ -35,7 +33,4 @@ public interface HubEventMapper {
 
     ScenarioRemovedEventAvro mapToAvro(ScenarioRemovedEvent event);
 
-    default long map(Instant value) {
-        return value.toEpochMilli();
-    }
 }

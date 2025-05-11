@@ -13,9 +13,7 @@ import ru.yandex.practicum.model.SensorEventType;
 @ToString(callSuper = true)
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class TemperatureSensorEvent extends SensorEvent {
-    @NotNull
     Integer temperatureC;
-    @NotNull
     Integer temperatureF;
 
     @Override
