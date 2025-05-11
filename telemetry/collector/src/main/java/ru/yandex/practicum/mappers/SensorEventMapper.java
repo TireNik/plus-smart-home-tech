@@ -7,7 +7,6 @@ import org.mapstruct.SubclassMapping;
 import ru.yandex.practicum.dto.sensor.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.model.SensorEvent;
-import ru.yandex.practicum.service.SensorEventService;
 
 import java.time.Instant;
 
