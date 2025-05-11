@@ -14,9 +14,6 @@ import java.time.Instant;
 public interface SensorEventMapper {
 
     @Mapping(target = "payload", source = ".", qualifiedByName = "mapClass")
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "hubId", source = "hubId")
-    @Mapping(target = "timestamp", source = "timestamp", qualifiedByName = "instantToLong")
     SensorEventAvro mapToAvro(SensorEvent event);
 
     @Named("mapClass")
@@ -33,8 +30,7 @@ public interface SensorEventMapper {
     SwitchSensorAvro mapToAvro(SwitchSensorEvent event);
     TemperatureSensorAvro mapToAvro(TemperatureSensorEvent event);
 
-    @Named("instantToLong")
-    default long map(Instant value) {
+    default long instantToLong(Instant value) {
         return value.toEpochMilli();
     }
 }
