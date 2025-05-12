@@ -13,11 +13,8 @@ import ru.yandex.practicum.model.SensorEventType;
 @ToString(callSuper = true)
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class MotionSensorEvent extends SensorEvent {
-    @NotNull
     Integer linkQuality;
-    @NotNull
     Boolean motion;
-    @NotNull
     Integer voltage;
 
     @Override

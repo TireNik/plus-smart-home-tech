@@ -1,6 +1,7 @@
 package ru.yandex.practicum.controller;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.service.EventService;
 import ru.yandex.practicum.model.HubEvent;
@@ -12,6 +13,7 @@ import java.util.Map;
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/events")
+@Slf4j
 public class EventController {
 
     private final Map<String, EventService> eventServices;

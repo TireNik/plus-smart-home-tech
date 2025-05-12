@@ -9,12 +9,6 @@ protocol HubEventProtocol {
     SWITCH_SENSOR
   }
 
-  enum ConditionOperationTypeAvro {
-    EQUALS,
-    GREATER_THAN,
-    LOWER_THAN
-  }
-
   enum ConditionTypeAvro {
     MOTION,
     LUMINOSITY,
@@ -24,40 +18,39 @@ protocol HubEventProtocol {
     HUMIDITY
   }
 
-  enum DeviceActionTypeAvro {
+  enum ConditionOperationAvro {
+    EQUALS,
+    GREATER_THAN,
+    LOWER_THAN
+  }
+
+  enum ActionTypeAvro {
     ACTIVATE,
     DEACTIVATE,
     INVERSE,
     SET_VALUE
   }
 
-  enum HubEventTypeAvro {
-    DEVICE_ADDED,
-    DEVICE_REMOVED,
-    SCENARIO_ADDED,
-    SCENARIO_REMOVED
-  }
-
-  record DeviceActionAvro {
-    string sensorId;
-    DeviceActionTypeAvro type;
-    int? value;
-  }
-
-  record ScenarioConditionAvro {
-    string sensorId;
-    ConditionTypeAvro type;
-    ConditionOperationTypeAvro operation;
-    union {null, int, boolean} value;
-  }
-
   record DeviceAddedEventAvro {
     string id;
-    DeviceTypeAvro deviceType;
+    DeviceTypeAvro type;
   }
 
   record DeviceRemovedEventAvro {
     string id;
+  }
+
+  record ScenarioConditionAvro {
+    string sensor_id;
+    ConditionTypeAvro type;
+    ConditionOperationAvro operation;
+    union { null, int, boolean } value = null;
+  }
+
+  record DeviceActionAvro {
+    string sensor_id;
+    ActionTypeAvro type;
+    union { null, int } value = null;
   }
 
   record ScenarioAddedEventAvro {
@@ -72,11 +65,12 @@ protocol HubEventProtocol {
 
   record HubEventAvro {
     string hub_id;
-    timestamp_ms timestamp;
-    union{DeviceAddedEventAvro,
+    long timestamp;
+    union {
+      DeviceAddedEventAvro,
       DeviceRemovedEventAvro,
       ScenarioAddedEventAvro,
       ScenarioRemovedEventAvro
-    } event;
+    } payload;
   }
 }
