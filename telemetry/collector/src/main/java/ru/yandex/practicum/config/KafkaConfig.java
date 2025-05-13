@@ -3,7 +3,6 @@ package ru.yandex.practicum.config;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -17,7 +16,6 @@ import java.util.Properties;
 
 @Configuration
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@RequiredArgsConstructor
 public class KafkaConfig {
 
     @Value("${kafka.bootstrap-servers}")
@@ -28,11 +26,10 @@ public class KafkaConfig {
     String hubEventsTopic;
 
     @Getter
-    @Value("${kafka.sensor-events-topic")
+    @Value("${kafka.sensor-events-topic}")
     String sensorEventsTopic;
 
-    @Getter
-    KafkaProducer<String, SpecificRecordBase> producer;
+    private KafkaProducer<String, SpecificRecordBase> producer;
 
     @PostConstruct
     public void init() {
@@ -44,4 +41,7 @@ public class KafkaConfig {
         producer = new KafkaProducer<>(props);
     }
 
+    public KafkaProducer<String, SpecificRecordBase> getProducer() {
+        return producer;
+    }
 }
