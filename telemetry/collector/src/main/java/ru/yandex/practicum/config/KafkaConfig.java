@@ -1,38 +1,47 @@
 package ru.yandex.practicum.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Properties;
+
 
 @Configuration
-@EnableConfigurationProperties(KafkaProperties.class)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class KafkaConfig {
 
-    @Bean
-    public ProducerFactory<String, SpecificRecordBase> producerFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, AvroSerializer.class);
-        return new DefaultKafkaProducerFactory<>(props);
+    @Value("${kafka.bootstrap-servers}")
+    String bootstrapServers;
+
+    @Getter
+    @Value("${kafka.hub-events-topic}")
+    String hubEventsTopic;
+
+    @Getter
+    @Value("${kafka.sensor-events-topic")
+    String sensorEventsTopic;
+
+    @Getter
+    KafkaProducer<String, SpecificRecordBase> producer;
+
+    @PostConstruct
+    public void init() {
+        Properties props = new Properties();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, AvroSerializer.class.getName());
+
+        producer = new KafkaProducer<>(props);
     }
 
-    @Bean
-    public KafkaTemplate<String, SpecificRecordBase> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
-    }
 }
