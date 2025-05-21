@@ -6,8 +6,6 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.KafkaEventConsumer;
 import ru.yandex.practicum.kafka.KafkaEventProducer;
-import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.service.SensorSnapshotService;
 
 import java.time.Duration;
@@ -23,82 +21,73 @@ public class AggregationStarter {
     private final SensorSnapshotService snapshotService;
 
     public void start() {
-        log.info("Запуск подписки на топик: telemetry.sensors.v1");
+        log.info("Инициализация подписки на топик telemetry.sensors.v1");
         consumer.subscribe(List.of("telemetry.sensors.v1"));
 
         try {
             while (true) {
-                log.debug("Ожидание сообщений от Kafka...");
+                log.debug("Ожидание новых сообщений из Kafka...");
                 var records = consumer.poll(Duration.ofMillis(100));
-                log.debug("Прочитано {} сообщений", records.count());
-
+                log.debug("Получено {} сообщений", records.count());
                 for (var record : records) {
-                    processEvent(record.value());
+                    var event = record.value();
+                    log.debug("Обработка события от датчика: {}", event);
+                    try {
+                        snapshotService.updateSnapshot(event).ifPresent(snapshot -> {
+                            try {
+                                producer.send(
+                                        "telemetry.snapshots.v1",
+                                        snapshot.getHubId(),
+                                        snapshot
+                                );
+                                log.info("Отправлен снепшот хаба: {}", snapshot.getHubId());
+                            } catch (Exception e) {
+                                log.error("Ошибка при отправке снепшота в Kafka: hubId={}", snapshot.getHubId(), e);
+                            }
+                        });
+                    } catch (Exception e) {
+                        log.error("Ошибка при обновлении снепшота по событию: {}", event, e);
+                    }
                 }
-
-                commitOffsets();
-
+                try {
+                    consumer.commit();
+                    log.debug("Коммит смещений выполнен успешно");
+                } catch (Exception e) {
+                    log.error("Ошибка при коммите смещений", e);
+                }
             }
+
         } catch (WakeupException e) {
-            log.info("Завершение по сигналу WakeupException");
+            log.info("Получен сигнал завершения (WakeupException)");
         } catch (Exception e) {
-            log.error("Ошибка в основном цикле обработки", e);
+            log.error("Критическая ошибка во время обработки событий", e);
         } finally {
-            shutdown();
+            try {
+                producer.flush();
+                log.info("Продюсер сбросил данные из буфера");
+
+                consumer.commit();
+                log.info("Финальный коммит смещений выполнен");
+
+            } catch (Exception e) {
+                log.error("Ошибка при финальной очистке ресурсов", e);
+            } finally {
+                try {
+                    log.info("Закрытие продюсера...");
+                    producer.close();
+                    log.info("Продюсер успешно закрыт");
+                } catch (Exception e) {
+                    log.error("Ошибка при закрытии продюсера", e);
+                }
+                try {
+                    log.info("Закрытие консьюмера...");
+                    consumer.close();
+                    log.info("Консьюмер успешно закрыт");
+                } catch (Exception e) {
+                    log.error("Ошибка при закрытии консьюмера", e);
+                }
+            }
         }
     }
 
-    private void processEvent(SensorEventAvro event) {
-        log.debug("Обработка события: {}", event);
-        try {
-            snapshotService.updateSnapshot(event).ifPresent(this::sendSnapshot);
-        } catch (Exception e) {
-            log.error("Ошибка при обновлении снепшота по событию: {}", event, e);
-        }
-    }
-
-    private void sendSnapshot(SensorsSnapshotAvro snapshot) {
-        try {
-            producer.send("telemetry.snapshots.v1", snapshot.getHubId(), snapshot);
-            log.info("Снепшот отправлен: hubId={}", snapshot.getHubId());
-        } catch (Exception e) {
-            log.error("Ошибка при отправке снепшота: hubId={}", snapshot.getHubId(), e);
-        }
-    }
-
-    private void commitOffsets() {
-        try {
-            consumer.commit();
-            log.debug("Смещения успешно зафиксированы");
-        } catch (Exception e) {
-            log.error("Ошибка при коммите смещений", e);
-        }
-    }
-
-    private void shutdown() {
-        log.info("Завершение работы AggregationStarter...");
-
-        try {
-            producer.flush();
-            log.info("Буфер продюсера очищен");
-
-            commitOffsets();
-
-        } catch (Exception e) {
-            log.error("Ошибка при финальной обработке", e);
-        } finally {
-            closeQuietly(producer, "продюсер");
-            closeQuietly(consumer, "консьюмер");
-        }
-    }
-
-    private void closeQuietly(AutoCloseable closeable, String name) {
-        try {
-            log.info("Закрытие компонента: {}", name);
-            closeable.close();
-            log.info("{} закрыт", name);
-        } catch (Exception e) {
-            log.error("Ошибка при закрытии компонента: {}", name, e);
-        }
-    }
 }
