@@ -1,6 +1,7 @@
 package ru.yandex.practicum.client;
 
 import com.google.protobuf.util.Timestamps;
+import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.grpc.telemetry.event.ActionTypeProto;
@@ -8,6 +9,7 @@ import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
 import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
 
+@Slf4j
 @Service
 public class HubRouterGrpcClient {
 
@@ -15,6 +17,7 @@ public class HubRouterGrpcClient {
     private HubRouterControllerGrpc.HubRouterControllerBlockingStub client;
 
     public void sendDeviceAction(String hubId, String scenarioName, String sensorId, Integer value, String type) {
+        try{
         DeviceActionProto action = DeviceActionProto.newBuilder()
                 .setSensorId(sensorId)
                 .setType(ActionTypeProto.valueOf(type.toUpperCase()))
@@ -29,5 +32,8 @@ public class HubRouterGrpcClient {
                 .build();
 
         client.handleDeviceAction(request);
+        } catch (Exception e) {
+            log.error("Ошибка отправки запроса в HubRouter: {}", e.getMessage(), e);
+        }
     }
 }
