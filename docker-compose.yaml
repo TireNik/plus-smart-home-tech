@@ -1,0 +1,11 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: smart-home-postgres
+    environment:
+      POSTGRES_DB: telemetry
+      POSTGRES_USER: telemetry_user
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "6432:5432"
+    restart: unless-stopped
