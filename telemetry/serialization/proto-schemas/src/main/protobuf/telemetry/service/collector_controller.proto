@@ -10,6 +10,6 @@ option java_outer_classname = "CollectorControllerOuterClass";
 package telemetry.service.collector;
 
 service CollectorController {
-    rpc CollectSensorEvent (telemetry.message.event.SensorEventProto) returns (google.protobuf.Empty);
-    rpc CollectHubEvent (telemetry.message.event.HubEventProto) returns (google.protobuf.Empty);
+  rpc CollectSensorEvent (telemetry.message.event.SensorEventProto) returns (google.protobuf.Empty);
+  rpc CollectHubEvent (telemetry.message.event.HubEventProto) returns (google.protobuf.Empty);
 }

@@ -6,9 +6,9 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.kafka.KafkaHubEventConsumer;
 import ru.yandex.practicum.kafka.telemetry.event.*;
-import ru.yandex.practicum.model.*;
+import ru.yandex.practicum.telemetry.collector.kafka.KafkaHubEventConsumer;
+import ru.yandex.practicum.telemetry.collector.model.*;
 import ru.yandex.practicum.repository.*;
 
 import javax.annotation.PostConstruct;

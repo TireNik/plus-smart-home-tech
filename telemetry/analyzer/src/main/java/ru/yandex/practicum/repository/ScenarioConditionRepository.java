@@ -1,8 +1,8 @@
 package ru.yandex.practicum.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.yandex.practicum.model.ScenarioCondition;
-import ru.yandex.practicum.model.ScenarioConditionId;
+import ru.yandex.practicum.telemetry.collector.model.ScenarioCondition;
+import ru.yandex.practicum.telemetry.collector.model.ScenarioConditionId;
 
 import java.util.List;
 

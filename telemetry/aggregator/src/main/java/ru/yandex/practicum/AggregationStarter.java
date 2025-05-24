@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.kafka.KafkaEventConsumer;
-import ru.yandex.practicum.kafka.KafkaEventProducer;
+import ru.yandex.practicum.telemetry.collector.kafka.KafkaEventConsumer;
+import ru.yandex.practicum.telemetry.collector.kafka.KafkaEventProducer;
 import ru.yandex.practicum.service.SensorSnapshotService;
 
 import java.time.Duration;

@@ -1,10 +1,9 @@
 package ru.yandex.practicum.client;
 
 import com.google.protobuf.util.Timestamps;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.grpc.telemetry.event.ActionTypeProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
@@ -13,16 +12,11 @@ import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class HubRouterGrpcClient {
 
-    private final HubRouterControllerGrpc.HubRouterControllerBlockingStub client;
-
-    public HubRouterGrpcClient(@Value("${grpc.client.hub-router.address}") String address) {
-        ManagedChannel channel = ManagedChannelBuilder.forTarget(address)
-                .usePlaintext()
-                .build();
-        this.client = HubRouterControllerGrpc.newBlockingStub(channel);
-    }
+    @GrpcClient("hub-router")
+    private HubRouterControllerGrpc.HubRouterControllerBlockingStub client;
 
     public void sendDeviceAction(String hubId, String scenarioName, String sensorId, Integer value, String type) {
         try{
