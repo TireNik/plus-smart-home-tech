@@ -1,4 +1,4 @@
-package ru.yandex.practicum.model.hub;
+package ru.yandex.practicum.telemetry.collector.model.hub;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

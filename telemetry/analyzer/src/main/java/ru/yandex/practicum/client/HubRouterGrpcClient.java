@@ -12,11 +12,14 @@ import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class HubRouterGrpcClient {
 
-    @GrpcClient("hub-router")
-    private HubRouterControllerGrpc.HubRouterControllerBlockingStub client;
+    private final HubRouterControllerGrpc.HubRouterControllerBlockingStub client;
+
+    public HubRouterGrpcClient(@GrpcClient("hub-router")
+                               HubRouterControllerGrpc.HubRouterControllerBlockingStub client) {
+        this.client = client;
+    }
 
     public void sendDeviceAction(String hubId, String scenarioName, String sensorId, Integer value, String type) {
         try{

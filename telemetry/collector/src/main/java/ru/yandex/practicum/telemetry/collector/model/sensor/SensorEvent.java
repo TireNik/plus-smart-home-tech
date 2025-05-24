@@ -1,4 +1,4 @@
-package ru.yandex.practicum.model.sensor;
+package ru.yandex.practicum.telemetry.collector.model.sensor;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
