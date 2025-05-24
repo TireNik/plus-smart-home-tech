@@ -104,7 +104,7 @@ public class HubEventProcessor implements Runnable {
             return;
         }
 
-        var scenario = scenarioRepository.save(new Scenario(hubId, scenarioName));
+        var scenario = scenarioRepository.save(new Scenario(null, hubId, scenarioName));
         log.info("Добавлен сценарий: {} (ID: {})", scenarioName, scenario.getId());
 
         for (var cond : data.getConditions()) {
@@ -124,7 +124,7 @@ public class HubEventProcessor implements Runnable {
 
             sensorRepository.findById(cond.getSensorId()).ifPresentOrElse(sensor -> {
                 var savedCondition = conditionRepository.save(
-                        new Condition(cond.getType().name(), cond.getOperation().name(), conditionValue)
+                        new Condition(null, cond.getType().name(), cond.getOperation().name(), conditionValue)
                 );
                 scenarioConditionRepository.save(new ScenarioCondition(scenario, sensor, savedCondition));
                 log.debug("Условие добавлено: sensorId={}, type={}, op={}, value={}",
@@ -137,7 +137,7 @@ public class HubEventProcessor implements Runnable {
 
             sensorRepository.findById(act.getSensorId()).ifPresentOrElse(sensor -> {
                 var savedAction = actionRepository.save(
-                        new Action(act.getType().name(), actionValue)
+                        new Action(null, act.getType().name(), actionValue)
                 );
                 scenarioActionRepository.save(new ScenarioAction(scenario, sensor, savedAction));
                 log.debug("Действие добавлено: sensorId={}, type={}, value={}",

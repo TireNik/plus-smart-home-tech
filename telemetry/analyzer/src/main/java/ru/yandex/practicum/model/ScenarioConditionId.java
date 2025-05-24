@@ -1,16 +1,33 @@
 package ru.yandex.practicum.model;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 import java.io.Serializable;
+import java.util.Objects;
 
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ScenarioConditionId implements Serializable {
-    private Long scenario;
-    private String sensor;
-    private Long condition;
+
+    Long scenario;
+    String sensor;
+    Long condition;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ScenarioConditionId that)) return false;
+        return Objects.equals(scenario, that.scenario) &&
+                Objects.equals(sensor, that.sensor) &&
+                Objects.equals(condition, that.condition);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(scenario, sensor, condition);
+    }
 }

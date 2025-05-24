@@ -1,21 +1,30 @@
 package ru.yandex.practicum.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "sensors")
-@Getter
-@Setter
+@Table(name = Sensor.TABLE_NAME)
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@EqualsAndHashCode(of = "id")
+@Getter
+@Setter
+@ToString
 public class Sensor {
+    public static final String TABLE_NAME = "sensors";
+    public static final String ID = "id";
+    public static final String HUB_ID = "hub_id";
+
     @Id
-    private String id;
-    private String hubId;
+    @Column(name = ID)
+    String id;
+
+    @Column(name = HUB_ID)
+    String hubId;
 }

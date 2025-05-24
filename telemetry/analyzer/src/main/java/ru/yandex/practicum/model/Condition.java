@@ -1,20 +1,37 @@
 package ru.yandex.practicum.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "conditions")
-@Getter
-@Setter
+@Table(name = Condition.TABLE_NAME)
 @NoArgsConstructor
 @AllArgsConstructor
-public class Condition extends BaseEntity {
-    private String type;
-    private String operation;
-    private Integer value;
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@EqualsAndHashCode(of = "id")
+@Getter
+@Setter
+@ToString
+public class Condition {
+    public static final String TABLE_NAME = "conditions";
+    public static final String ID = "id";
+    public static final String TYPE = "type";
+    public static final String OPERATION = "operation";
+    public static final String VALUE = "value";
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = ID)
+    Long id;
+
+    @Column(name = TYPE)
+    String type;
+
+    @Column(name = OPERATION)
+    String operation;
+
+    @Column(name = VALUE)
+    Integer value;
 }
+

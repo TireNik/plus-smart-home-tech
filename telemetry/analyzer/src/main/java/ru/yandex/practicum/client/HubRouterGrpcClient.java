@@ -18,6 +18,8 @@ public class HubRouterGrpcClient {
 
     public void sendDeviceAction(String hubId, String scenarioName, String sensorId, Integer value, String type) {
         try{
+            log.info("Отправка команды устройству по gRPC: hubId={}, scenario={}, sensorId={}, value={}, type={}",
+                    hubId, scenarioName, sensorId, value, type);
         DeviceActionProto action = DeviceActionProto.newBuilder()
                 .setSensorId(sensorId)
                 .setType(ActionTypeProto.valueOf(type.toUpperCase()))
