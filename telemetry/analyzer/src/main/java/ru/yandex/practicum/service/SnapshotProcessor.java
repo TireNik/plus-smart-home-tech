@@ -4,72 +4,126 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.client.HubRouterGrpcClient;
 import ru.yandex.practicum.kafka.KafkaSnapshotConsumer;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.model.Condition;
+import ru.yandex.practicum.model.Scenario;
+import ru.yandex.practicum.model.ScenarioAction;
 import ru.yandex.practicum.model.ScenarioCondition;
 import ru.yandex.practicum.repository.ScenarioActionRepository;
 import ru.yandex.practicum.repository.ScenarioConditionRepository;
 import ru.yandex.practicum.repository.ScenarioRepository;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SnapshotProcessor {
 
     ScenarioRepository scenarioRepository;
     ScenarioConditionRepository scenarioConditionRepository;
     ScenarioActionRepository scenarioActionRepository;
-    HubRouterGrpcClient grpcClient;
+    HubRouterGrpcClient client;
     KafkaSnapshotConsumer consumer;
 
     public void start() {
-        log.info("Подписка на топик telemetry.snapshots.v1");
+        log.info("Инициализация подписки на топик telemetry.snapshots.v1");
         consumer.subscribe(List.of("telemetry.snapshots.v1"));
-        while (!Thread.currentThread().isInterrupted()) {
-            var records = consumer.poll(Duration.ofMillis(100));
-            for (var record : records) {
-                try {
-                    process(record.value());
-                } catch (Exception e) {
-                    log.error("Ошибка при обработке снапшота", e);
+        try {
+            while (true) {
+                Thread.sleep(2000);
+                var records = consumer.poll(Duration.ofMillis(100));
+                if (!records.isEmpty()) {
+                    for (var record : records) {
+                        var snapshot = record.value();
+                        log.debug("Обработка снепшота: {}", snapshot);
+                        try {
+                            process(snapshot);
+                        } catch (Exception e) {
+                            log.error("Ошибка при обработке снепшота: {}", snapshot, e);
+                        }
+                    }
+                    try {
+                        consumer.commit();
+                    } catch (Exception e) {
+                        log.error("Ошибка при коммите смещений", e);
+                    }
                 }
             }
-            consumer.commit();
+        } catch (WakeupException e) {
+            log.info("Получен сигнал завершения (WakeupException)");
+        } catch (Exception e) {
+            log.error("Критическая ошибка во время обработки событий", e);
+        } finally {
+            try {
+                log.info("Закрытие консьюмера");
+                consumer.close();
+                log.info("Консьюмер успешно закрыт");
+            } catch (Exception e) {
+                log.error("Ошибка при закрытии консьюмера", e);
+            }
         }
-        consumer.close();
     }
 
-    private void process(SensorsSnapshotAvro snapshot) {
-        var hubId = snapshot.getHubId();
-        var scenarios = scenarioRepository.findByHubId(hubId);
-        for (var scenario : scenarios) {
+    public void process(SensorsSnapshotAvro snapshot) {
+        log.warn("Сработал метод process() для снапшота: {}", snapshot);
+        String hubId = snapshot.getHubId();
+        Instant ts = snapshot.getTimestamp();
+
+        log.info("Обработка снапшота для хаба {} в {}", hubId, ts);
+        log.debug("Сенсоры в снапшоте: {}", snapshot.getSensorsState().keySet());
+        snapshot.getSensorsState()
+                .forEach((k, v) -> log.debug("  [{}] → {}", k, v.getData().getClass()));
+
+        var scenarios = scenarioRepository.findAllByHubId(hubId);
+        log.debug("Найдено {} сценариев для хаба {}", scenarios.size(), hubId);
+
+        for (Scenario scenario : scenarios) {
+            log.debug("Проверка сценария: {}", scenario.getName());
             var conditions = scenarioConditionRepository.findAllByScenarioId(scenario.getId());
-            if (conditionsMet(conditions, snapshot)) {
+
+            log.debug("Условия сценария ({}): {}", conditions.size(), conditions);
+            if (isSatisfied(conditions, snapshot)) {
+                log.info("Сценарий '{}' активирован", scenario.getName());
                 var actions = scenarioActionRepository.findAllByScenarioId(scenario.getId());
-                for (var action : actions) {
-                    grpcClient.sendDeviceAction(hubId, scenario.getName(),
-                            action.getSensor().getId(), action.getAction().getValue(),
-                            action.getAction().getType());
+
+                for (ScenarioAction action : actions) {
+                    String sensorId = action.getSensor().getId();
+                    String type = action.getAction().getType();
+                    Integer value = action.getAction().getValue();
+                    log.info("Отправка команды: sensorId={}, type={}, value={}", sensorId, type, value);
+                    log.warn("Условия выполнены, отправляем команду: {}", action);
+                    client.sendDeviceAction(hubId, scenario.getName(), sensorId, value, type);
                 }
+            } else {
+                log.warn("Условия не выполнены: {}", scenario.getName());
             }
         }
     }
 
-    private boolean conditionsMet(List<ScenarioCondition> conditions, SensorsSnapshotAvro snapshot) {
+    private boolean isSatisfied(List<ScenarioCondition> conditions, SensorsSnapshotAvro snapshot) {
         for (ScenarioCondition condition : conditions) {
             var sensorId = condition.getSensor().getId();
             var state = snapshot.getSensorsState().get(sensorId);
 
-            if (state == null || !evaluateCondition(condition.getCondition(), state.getData())) {
+            if (state == null) {
+                log.warn("Данные по сенсору '{}' отсутствуют в снапшоте", sensorId);
+                log.warn("Сенсоры из снапшота: {}", snapshot.getSensorsState().keySet());
                 return false;
             }
+
+            log.debug("Найден сенсор '{}': {}", sensorId, state);
+            boolean conditionMet = evaluateCondition(condition.getCondition(), state.getData());
+            log.debug("Условие по сенсору {}: {}", sensorId, conditionMet ? "выполнено" : "не выполнено");
+
+            if (!conditionMet) return false;
         }
         return true;
     }
@@ -160,6 +214,7 @@ public class SnapshotProcessor {
                 return false;
             }
         }
+
     }
 
     private boolean compare(int actual, int expected, String operation) {

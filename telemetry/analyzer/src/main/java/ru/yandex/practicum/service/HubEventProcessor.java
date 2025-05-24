@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.kafka.KafkaHubEventConsumer;
 import ru.yandex.practicum.kafka.telemetry.event.*;
@@ -15,8 +16,8 @@ import java.time.Duration;
 import java.util.List;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class HubEventProcessor implements Runnable {
 
@@ -29,34 +30,55 @@ public class HubEventProcessor implements Runnable {
     ScenarioActionRepository scenarioActionRepository;
 
     @PostConstruct
-    public void subscribe() {
-        log.info("Подписка на топик telemetry.hubs.v1");
+    public void init() {
+        log.info("Инициализация подписки на топик telemetry.hubs.v1");
         consumer.subscribe(List.of("telemetry.hubs.v1"));
     }
 
     @Override
     public void run() {
-        while (!Thread.currentThread().isInterrupted()) {
-            var records = consumer.poll(Duration.ofMillis(100));
-            for (var record : records) {
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                var records = consumer.poll(Duration.ofMillis(100));
+                for (var record : records) {
+                    var hubEvent = record.value();
+                    log.debug("Обработка снепшота: {}", hubEvent);
+                    try {
+                        process(hubEvent);
+                    } catch (Exception e) {
+                        log.error("Ошибка обработки HubEvent: {}", e.getMessage(), e);
+                    }
+                }
                 try {
-                    process(record.value());
+                    consumer.commit();
                 } catch (Exception e) {
-                    log.error("Ошибка при обработке события: {}", e.getMessage(), e);
+                    log.error("Ошибка при коммите смещений", e);
                 }
             }
-            consumer.commit();
+        } catch (WakeupException e) {
+            log.info("Получен сигнал завершения (WakeupException)");
+        } catch (Exception e) {
+            log.error("Критическая ошибка во время обработки событий", e);
+        } finally {
+            try {
+                log.info("Закрытие консьюмера");
+                consumer.close();
+                log.info("Консьюмер успешно закрыт");
+            } catch (Exception e) {
+                log.error("Ошибка при закрытии консьюмера", e);
+            }
         }
-        consumer.close();
     }
 
-    private void process(HubEventAvro event) {
-        switch (event.getPayload().getClass().getSimpleName()) {
+    public void process(HubEventAvro event) {
+        var payload = event.getPayload();
+
+        switch (payload.getClass().getSimpleName()) {
             case "DeviceAddedEventAvro" -> handleDeviceAdded(event);
             case "DeviceRemovedEventAvro" -> handleDeviceRemoved(event);
             case "ScenarioAddedEventAvro" -> handleScenarioAdded(event);
             case "ScenarioRemovedEventAvro" -> handleScenarioRemoved(event);
-            default -> log.warn("Необработанный тип события: {}", event.getPayload().getClass().getSimpleName());
+            default -> log.warn("Необработанный тип события: {}", payload.getClass().getSimpleName());
         }
     }
 
