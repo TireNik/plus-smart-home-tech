@@ -15,14 +15,8 @@
     <modules>
         <module>serialization</module>
         <module>collector</module>
-        <module>aggregator</module>
         <module>analyzer</module>
+        <module>aggregator</module>
     </modules>
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-        </dependency>
-    </dependencies>
 
 </project>
