@@ -18,7 +18,6 @@ import java.time.Instant;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SnapshotProcessor {
@@ -28,6 +27,21 @@ public class SnapshotProcessor {
     ScenarioActionRepository scenarioActionRepository;
     HubRouterGrpcClient client;
     KafkaSnapshotConsumer consumer;
+
+    public SnapshotProcessor(ScenarioRepository scenarioRepository,
+                             ScenarioConditionRepository scenarioConditionRepository,
+                             ScenarioActionRepository scenarioActionRepository,
+                             HubRouterGrpcClient client,
+                             KafkaSnapshotConsumer consumer) {
+        this.scenarioRepository = scenarioRepository;
+        this.scenarioConditionRepository = scenarioConditionRepository;
+        this.scenarioActionRepository = scenarioActionRepository;
+        this.client = client;
+        this.consumer = consumer;
+
+        Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
+
+    }
 
     public void start() {
             log.info("Инициализация подписки на топик telemetry.snapshots.v1");

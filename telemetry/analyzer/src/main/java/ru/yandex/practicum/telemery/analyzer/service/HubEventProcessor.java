@@ -16,7 +16,6 @@ import java.time.Duration;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class HubEventProcessor implements Runnable {
@@ -28,6 +27,26 @@ public class HubEventProcessor implements Runnable {
     ActionRepository actionRepository;
     ScenarioConditionRepository scenarioConditionRepository;
     ScenarioActionRepository scenarioActionRepository;
+
+    public HubEventProcessor(
+            KafkaHubEventConsumer consumer,
+            SensorRepository sensorRepository,
+            ScenarioRepository scenarioRepository,
+            ConditionRepository conditionRepository,
+            ActionRepository actionRepository,
+            ScenarioConditionRepository scenarioConditionRepository,
+            ScenarioActionRepository scenarioActionRepository
+    ) {
+        this.consumer = consumer;
+        this.sensorRepository = sensorRepository;
+        this.scenarioRepository = scenarioRepository;
+        this.conditionRepository = conditionRepository;
+        this.actionRepository = actionRepository;
+        this.scenarioConditionRepository = scenarioConditionRepository;
+        this.scenarioActionRepository = scenarioActionRepository;
+
+        Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
+    }
 
     @PostConstruct
     public void init() {

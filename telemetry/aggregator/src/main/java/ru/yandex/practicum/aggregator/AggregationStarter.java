@@ -1,6 +1,5 @@
 package ru.yandex.practicum.aggregator;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
@@ -13,12 +12,21 @@ import java.util.List;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class AggregationStarter {
 
     private final KafkaEventConsumer consumer;
     private final KafkaEventProducer producer;
     private final SensorSnapshotService snapshotService;
+
+    public AggregationStarter(KafkaEventConsumer consumer,
+                              KafkaEventProducer producer,
+                              SensorSnapshotService snapshotService) {
+        this.consumer = consumer;
+        this.producer = producer;
+        this.snapshotService = snapshotService;
+
+        Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
+    }
 
     public void start() {
         log.info("Инициализация подписки на топик telemetry.sensors.v1");

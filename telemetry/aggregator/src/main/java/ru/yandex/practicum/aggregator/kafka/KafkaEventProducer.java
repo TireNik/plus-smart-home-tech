@@ -1,6 +1,8 @@
 package ru.yandex.practicum.aggregator.kafka;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -14,19 +16,22 @@ import java.util.Properties;
 import java.util.concurrent.Future;
 
 @Component
+@RequiredArgsConstructor
 public class KafkaEventProducer {
 
-    private final KafkaProducer<String, SpecificRecordBase> producer;
+    private KafkaProducer<String, SpecificRecordBase> producer;
+    private final KafkaProperties kafkaProperties;
 
-    public KafkaEventProducer() {
+    @PostConstruct
+    public void init() {
         this.producer = new KafkaProducer<>(producerProperties());
     }
 
     private Properties producerProperties() {
         Properties props = new Properties();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, AvroSerializer.class.getName());
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, kafkaProperties.getProducer().getKeySerializer());
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, kafkaProperties.getProducer().getValueSerializer());
         return props;
     }
 
