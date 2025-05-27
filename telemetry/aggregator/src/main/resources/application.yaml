@@ -11,7 +11,7 @@ kafka:
     group-id: aggregator-group
     enable-auto-commit: false
     key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value-deserializer: ru.yandex.practicum.kafka.avro.SensorEventDeserializer
+    value-deserializer: deserializer.SensorEventDeserializer
   producer:
     key-serializer: org.apache.kafka.common.serialization.StringSerializer
-    value-serializer: ru.yandex.practicum.kafka.avro.AvroSerializer
+    value-serializer: serializer.AvroSerializer
