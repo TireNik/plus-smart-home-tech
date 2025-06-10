@@ -1,42 +1,11 @@
 spring:
   application:
     name: analyzer
-  datasource:
-    url: jdbc:postgresql://localhost:6432/analyzer
-    username: user
-    password: password
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
-grpc:
-  client:
-    hub-router:
-      address: 'static://localhost:59090'
-      enableKeepAlive: true
-      keepAliveWithoutCalls: true
-      negotiationType: plaintext
-
-logging:
-  level:
-    root: INFO
-    ru.yandex.practicum.telemetry.analyzer: DEBUG
-
-kafka:
-  snapshot:
-    bootstrap-servers: localhost:9092
-    group-id: analyzer-snapshot-group
-    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value-deserializer: deserializer.SensorsSnapshotDeserializer
-    auto-commit: false
-
-  hub-event:
-    bootstrap-servers: localhost:9092
-    group-id: analyzer-hub-event-group
-    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value-deserializer: deserializer.HubEventAvroDeserializer
-    auto-commit: false
+  config:
+    import: configserver:http://localhost:8888
+  cloud:
+    config:
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        max-interval: 6000
