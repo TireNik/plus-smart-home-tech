@@ -22,4 +22,10 @@ public class StoreController {
     public List<ProductDto> getProduct(@RequestParam ProductCategory category, PageableDto pageableDto) {
         return storeService.getProducts(category, pageableDto);
     }
+
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping
+    public ProductDto updateProduct(@RequestBody ProductDto productDto) {
+        return storeService.updateProduct(productDto);
+    }
 }

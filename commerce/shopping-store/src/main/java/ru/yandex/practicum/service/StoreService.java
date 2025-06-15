@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface StoreService {
     List<ProductDto> getProducts(ProductCategory category, PageableDto pageableDto);
+    ProductDto updateProduct(ProductDto productDto);
 }

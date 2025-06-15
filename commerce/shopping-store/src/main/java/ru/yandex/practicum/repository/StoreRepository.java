@@ -7,9 +7,11 @@ import ru.yandex.practicum.model.Product;
 import ru.yandex.practicum.type.ProductCategory;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface StoreRepository extends JpaRepository<Product, Long> {
 
     List<Product> findAllByProductCategory(ProductCategory productCategory, Pageable pageable);
+    Optional<Product> findByProductId(String productId);
 }

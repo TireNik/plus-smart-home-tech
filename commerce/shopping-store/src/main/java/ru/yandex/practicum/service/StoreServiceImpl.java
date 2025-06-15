@@ -7,6 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.dto.PageableDto;
 import ru.yandex.practicum.dto.ProductDto;
+import ru.yandex.practicum.exeption.ProductNotFoundException;
 import ru.yandex.practicum.mapper.StoreMapper;
 import ru.yandex.practicum.model.Product;
 import ru.yandex.practicum.repository.StoreRepository;
@@ -30,4 +31,15 @@ public class StoreServiceImpl implements StoreService{
 
         return mapper.toProductDtoList(products);
     }
+
+    @Override
+    public ProductDto updateProduct(ProductDto productDto) {
+        if (storeRepository.findByProductId(productDto.getProductId()).isEmpty()) {
+            throw new ProductNotFoundException("Создаваемый товар уже есть в базе данных");
+        }
+        Product product = mapper.toProduct(productDto);
+        return mapper.toProductDto(storeRepository.save(product));
+    }
+
+
 }
