@@ -6,17 +6,19 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Embeddable
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class Size {
     @Column(name = "width", nullable = false)
-    private double width;
+    double width;
     @Column(name = "height", nullable = false)
-    private double height;
+    double height;
     @Column(name = "depth", nullable = false)
-    private double depth;
+    double depth;
 }

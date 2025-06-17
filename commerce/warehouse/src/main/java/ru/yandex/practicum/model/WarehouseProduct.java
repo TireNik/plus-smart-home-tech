@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 
 @Entity
 @Table(name = "warehouse_product")
@@ -15,15 +16,16 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class WarehouseProduct {
     @Id
     @Column(name = "product_id", nullable = false)
-    private String productId;
+    String productId;
     @Column(name = "quantity", nullable = false)
-    private int quantity;
+    int quantity;
     @Column(name = "fragile", nullable = false)
-    private boolean fragile;
+    boolean fragile;
     @Column(name = "weight", nullable = false)
-    private double weight;
-    private Size dimension;
+    double weight;
+    Size dimension;
 }
