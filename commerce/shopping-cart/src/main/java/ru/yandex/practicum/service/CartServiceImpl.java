@@ -10,6 +10,7 @@ import ru.yandex.practicum.exeption.NotAuthorizedUserException;
 import ru.yandex.practicum.mapper.CartMapper;
 import ru.yandex.practicum.model.ShoppingCart;
 import ru.yandex.practicum.repository.CartRepository;
+import ru.yandex.practicum.warehouse.WarehouseClient;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +22,7 @@ public class CartServiceImpl implements CartService{
 
     private final CartRepository cartRepository;
     private final CartMapper mapper;
+    private final WarehouseClient warehouseClient;
 
     @Override
     public ShoppingCartDto getShoppingCart(String userId) {
@@ -32,6 +34,13 @@ public class CartServiceImpl implements CartService{
     @Transactional
     @Override
     public ShoppingCartDto addToShoppingCart(String userId, Map<String, Long> products) {
+        ShoppingCartDto shoppingCartDto = ShoppingCartDto.builder()
+                .shoppingCartId(userId)
+                .products(products)
+                .build();
+
+        warehouseClient.checkShoppingCart(shoppingCartDto);
+
         checkUserPresence(userId);
         ShoppingCart shoppingCart = cartRepository.findByUserId(userId);
 
