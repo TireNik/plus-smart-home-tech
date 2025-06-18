@@ -3,9 +3,8 @@ package ru.yandex.practicum.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.dto.BookedProductsDto;
-import ru.yandex.practicum.dto.NewProductInWarehouseRequest;
-import ru.yandex.practicum.dto.ShoppingCartDto;
+import ru.yandex.practicum.dto.*;
+import ru.yandex.practicum.exeption.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.exeption.ProductInShoppingCartLowQuantityInWarehouse;
 import ru.yandex.practicum.exeption.SpecifiedProductAlreadyInWarehouseException;
 import ru.yandex.practicum.mapper.WarehouseMapper;
@@ -61,6 +60,28 @@ public class WarehouseServiceImpl implements WarehouseService {
                 .deliveryWeight(deliveryWeight)
                 .deliveryVolume(deliveryVolume)
                 .fragile(fragile)
+                .build();
+    }
+
+    @Override
+    public void addProductToWarehouse(AddProductToWarehouseRequest request) {
+        Optional<WarehouseProduct> product = warehouseRepository.findById(request.getProductId());
+        if (product.isPresent()) {
+            throw new NoSpecifiedProductInWarehouseException("Товар не найден");
+        }
+        WarehouseProduct warehouseProduct = product.get();
+        warehouseProduct.setQuantity(warehouseProduct.getQuantity() + request.getQuantity());
+        warehouseRepository.save(warehouseProduct);
+    }
+
+    @Override
+    public AddressDto getAddress() {
+        return AddressDto.builder()
+                .country("Россия")
+                .city("Москва")
+                .street("Ленинградский проспект")
+                .house("10")
+                .flat("1")
                 .build();
     }
 }
