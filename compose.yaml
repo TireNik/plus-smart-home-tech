@@ -8,7 +8,30 @@ services:
       POSTGRES_PASSWORD: password
     ports:
       - "6432:5432"
+    volumes:
+      - analyzer-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d analyzer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  commerce-postgres:
+    image: postgres:15
+    container_name: commerce_postgres
+    environment:
+      POSTGRES_DB: commerce
+      POSTGRES_USER: commerce
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5433:5432"  # Маппинг порта: 5433 на хосте -> 5432 в контейнере
+    volumes:
+      - commerce-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commerce -d commerce"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kafka:
     image: confluentinc/confluent-local:7.4.3
@@ -44,3 +67,7 @@ services:
                              --partitions 1 --replication-factor 1 --if-not-exists \
                              --bootstrap-server kafka:29092'"
     init: true
+
+volumes:
+  analyzer-postgres-data:
+  commerce-postgres-data:
