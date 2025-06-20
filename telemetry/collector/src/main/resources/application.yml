@@ -11,11 +11,11 @@ spring:
         max-interval: 6000
       discovery:
         enabled: true
-        service-id: config-server
+        serviceId: config-server
 
 eureka:
   instance:
     hostname: localhost
   client:
-    service-url:
+    serviceUrl:
       defaultZone: http://localhost:8761/eureka/
