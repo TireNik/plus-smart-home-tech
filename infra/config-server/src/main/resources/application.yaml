@@ -11,6 +11,9 @@ spring:
             - classpath:config/telemetry/{application}
             - classpath:config/commerce/{application}
 
+server:
+  port: 0
+
 eureka:
   instance:
     hostname: localhost

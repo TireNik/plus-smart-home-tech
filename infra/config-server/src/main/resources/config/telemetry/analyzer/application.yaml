@@ -1,17 +1,3 @@
-spring:
-  application:
-    name: analyzer
-  datasource:
-    url: jdbc:postgresql://localhost:6432/analyzer
-    username: user
-    password: password
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
 
 grpc:
   client:
@@ -21,22 +7,29 @@ grpc:
       keepAliveWithoutCalls: true
       negotiationType: plaintext
 
-logging:
-  level:
-    root: INFO
-    ru.yandex.practicum.telemetry.analyzer: DEBUG
+spring:
+  application:
+    name: analyzer
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:6541/analyzer
+    username: user
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
 
 kafka:
-  snapshot:
-    bootstrap-servers: localhost:9092
-    group-id: analyzer-snapshot-group
-    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value-deserializer: deserializer.SensorsSnapshotDeserializer
-    auto-commit: false
-
-  hub-event:
-    bootstrap-servers: localhost:9092
-    group-id: analyzer-hub-event-group
-    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value-deserializer: deserializer.HubEventAvroDeserializer
-    auto-commit: false
+  bootstrap-servers: localhost:9092
+  group-id:
+    snapshot: analyzer.snapshots
+    hub: analyzer.hubs
+  topics:
+    snapshot: telemetry.snapshots.v1
+    hub: telemetry.hubs.v1
+  auto-commit: false
