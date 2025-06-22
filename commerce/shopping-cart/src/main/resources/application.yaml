@@ -1,13 +1,6 @@
 server:
   port: 0
 
-eureka:
-  instance:
-    hostname: localhost
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
-
 spring:
   application:
     name: shopping-cart
@@ -22,3 +15,10 @@ spring:
       discovery:
         enabled: true
         service-id: config-server
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/

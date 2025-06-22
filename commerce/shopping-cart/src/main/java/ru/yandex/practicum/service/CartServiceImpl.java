@@ -27,7 +27,7 @@ public class CartServiceImpl implements CartService{
     @Override
     public ShoppingCartDto getShoppingCart(String userId) {
         checkUserPresence(userId);
-        ShoppingCart cart = cartRepository.findByUserId(userId);
+        ShoppingCart cart = cartRepository.findByUsername(userId);
         return mapper.toShoppingCartDto(cart);
     }
 
@@ -42,7 +42,7 @@ public class CartServiceImpl implements CartService{
         warehouseClient.checkShoppingCart(shoppingCartDto);
 
         checkUserPresence(userId);
-        ShoppingCart shoppingCart = cartRepository.findByUserId(userId);
+        ShoppingCart shoppingCart = cartRepository.findByUsername(userId);
 
         if (shoppingCart == null) {
             shoppingCart = new ShoppingCart();
@@ -67,7 +67,7 @@ public class CartServiceImpl implements CartService{
     @Override
     public void deleteUserCart(String userId) {
         checkUserPresence(userId);
-        ShoppingCart cart = cartRepository.findByUserId(userId);
+        ShoppingCart cart = cartRepository.findByUsername(userId);
         cart.setCartState(false);
         cartRepository.save(cart);
     }
@@ -76,7 +76,7 @@ public class CartServiceImpl implements CartService{
     @Override
     public ShoppingCartDto changeCart(String userId, Map<String, Long> items) {
         checkUserPresence(userId);
-        ShoppingCart cart = cartRepository.findByUserId(userId);
+        ShoppingCart cart = cartRepository.findByUsername(userId);
         if (cart == null)
             throw new NoProductsInShoppingCartException("Отсутствует корзина у пользователя " + userId);
         cart.setProducts(items);
@@ -87,7 +87,7 @@ public class CartServiceImpl implements CartService{
     @Override
     public ShoppingCartDto changeCountProductInCart(String userId, ChangeProductQuantityRequest request) {
         checkUserPresence(userId);
-        ShoppingCart cart = cartRepository.findByUserId(userId);
+        ShoppingCart cart = cartRepository.findByUsername(userId);
         if (cart == null || !cart.getProducts().containsKey(request.getProductId()))
             throw new NoProductsInShoppingCartException("Отсутствует корзина у пользователя " + userId);
         cart.getProducts().put(request.getProductId(), request.getNewQuantity());
