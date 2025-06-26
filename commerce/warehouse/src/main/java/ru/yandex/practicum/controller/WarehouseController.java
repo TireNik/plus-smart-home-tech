@@ -1,6 +1,7 @@
 package ru.yandex.practicum.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.dto.*;
@@ -9,6 +10,7 @@ import ru.yandex.practicum.service.WarehouseService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/warehouse")
+@Slf4j
 public class WarehouseController {
 
     private final WarehouseService warehouseService;
@@ -26,7 +28,7 @@ public class WarehouseController {
         return warehouseService.checkShoppingCart(shoppingCartDto);
     }
 
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/add")
     public void addProductToWarehouse(@RequestBody AddProductToWarehouseRequest request) {
         warehouseService.addProductToWarehouse(request);

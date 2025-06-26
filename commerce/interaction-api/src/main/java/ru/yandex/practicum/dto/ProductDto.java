@@ -1,23 +1,40 @@
 package ru.yandex.practicum.dto;
 
 import jakarta.validation.constraints.Min;
-import lombok.AccessLevel;
-import lombok.Getter;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import ru.yandex.practicum.type.ProductCategory;
 import ru.yandex.practicum.type.ProductState;
 import ru.yandex.practicum.type.QuantityState;
 
-@Getter
+import java.util.UUID;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ProductDto {
-    String productId;
+    UUID productId;
+
+    @NotBlank
     String productName;
+
+    @NotBlank
     String description;
+
     String imageSrc;
+
+    @NotNull
     QuantityState quantityState;
+
+    @NotNull
     ProductState productState;
+
     ProductCategory productCategory;
-    @Min(value = 1)
+
+    @NotNull
+    @Min(value = 1, message = "Цена должна быть больше или равна 1")
     Float price;
 }

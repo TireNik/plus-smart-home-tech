@@ -25,9 +25,9 @@ public class CartServiceImpl implements CartService{
     private final WarehouseClient warehouseClient;
 
     @Override
-    public ShoppingCartDto getShoppingCart(String userId) {
-        checkUserPresence(userId);
-        ShoppingCart cart = cartRepository.findByUsername(userId);
+    public ShoppingCartDto getShoppingCart(String username) {
+        checkUserPresence(username);
+        ShoppingCart cart = cartRepository.findByUsername(username);
         return mapper.toShoppingCartDto(cart);
     }
 

@@ -7,26 +7,43 @@ import ru.yandex.practicum.type.ProductCategory;
 import ru.yandex.practicum.type.ProductState;
 import ru.yandex.practicum.type.QuantityState;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "products")
 @Getter
 @Setter
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Product {
     @Id
-    String productId;
+    @Column(name = "product_id")
+    @GeneratedValue(strategy = GenerationType.UUID)
+    UUID productId;
+
+    @Column(name = "product_name", nullable = false)
     String productName;
+
+    @Column(name = "description", length = 2000, nullable = false)
     String description;
+
+    @Column(name = "image_src", length = 500)
     String imageSrc;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "quantity_state", length = 50, nullable = false)
     QuantityState quantityState;
+
     @Enumerated(EnumType.STRING)
+    @Column(name = "product_state", length = 50, nullable = false)
     ProductState productState;
+
     @Enumerated(EnumType.STRING)
+    @Column(name = "product_category", length = 50)
     ProductCategory productCategory;
 
+    @Column(name = "price")
     Float price;
 }

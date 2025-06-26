@@ -8,6 +8,7 @@ import ru.yandex.practicum.exeption.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.exeption.ProductInShoppingCartLowQuantityInWarehouse;
 import ru.yandex.practicum.exeption.SpecifiedProductAlreadyInWarehouseException;
 import ru.yandex.practicum.mapper.WarehouseMapper;
+import ru.yandex.practicum.model.Size;
 import ru.yandex.practicum.model.WarehouseProduct;
 import ru.yandex.practicum.repository.WarehouseRepository;
 
@@ -63,13 +64,19 @@ public class WarehouseServiceImpl implements WarehouseService {
                 .build();
     }
 
+    @Transactional
     @Override
     public void addProductToWarehouse(AddProductToWarehouseRequest request) {
-        Optional<WarehouseProduct> product = warehouseRepository.findById(request.getProductId());
-        if (product.isPresent()) {
-            throw new NoSpecifiedProductInWarehouseException("Товар не найден");
-        }
-        WarehouseProduct warehouseProduct = product.get();
+        WarehouseProduct warehouseProduct = warehouseRepository.findById(request.getProductId())
+                .orElseGet(() -> {
+                    WarehouseProduct newProduct = new WarehouseProduct();
+                    newProduct.setProductId(request.getProductId());
+                    newProduct.setQuantity(0);
+                    newProduct.setFragile(false);
+                    newProduct.setWeight(0.0);
+                    newProduct.setDimension(new Size(0.0, 0.0, 0.0));
+                    return newProduct;
+                });
         warehouseProduct.setQuantity(warehouseProduct.getQuantity() + request.getQuantity());
         warehouseRepository.save(warehouseProduct);
     }

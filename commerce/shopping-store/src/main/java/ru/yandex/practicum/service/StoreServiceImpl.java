@@ -1,6 +1,7 @@
 package ru.yandex.practicum.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -16,8 +17,8 @@ import ru.yandex.practicum.repository.StoreRepository;
 import ru.yandex.practicum.type.ProductCategory;
 import ru.yandex.practicum.type.ProductState;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,35 +29,36 @@ public class StoreServiceImpl implements StoreService{
     private final StoreMapper mapper;
 
     @Override
-    public List<ProductDto> getProductsByCategory(ProductCategory category, PageableDto pageable) {
-        Pageable page = PageRequest.of(pageable.getPage(), pageable.getSize(),
-        Sort.by(Sort.DEFAULT_DIRECTION, String.join(",", pageable.getSort())));
+    public Page<ProductDto> getProductsByCategory(ProductCategory category, PageableDto pageable) {
+        Pageable pageRequest = PageRequest.of(
+                pageable.getPage(),
+                pageable.getSize(),
+                Sort.by(Sort.Direction.ASC, pageable.getSort().toArray(new String[0]))
+        );
 
-        List<Product> products = storeRepository.findAllByProductCategory(category, page);
+        Page<Product> page = storeRepository.findAllByProductCategory(category, pageRequest);
 
-        return mapper.toProductDtoList(products);
+        return page.map(mapper::toProductDto);
     }
 
     @Transactional
     @Override
     public ProductDto createProduct(ProductDto productDto) {
-        if (storeRepository.findByProductId(productDto.getProductId()).isEmpty()) {
-            throw new ProductNotFoundException("Создаваемый товар уже есть в базе данных");
-        }
         Product product = mapper.toProduct(productDto);
+        product.setProductState(ProductState.ACTIVE);
         return mapper.toProductDto(storeRepository.save(product));
     }
 
     @Transactional
     @Override
     public ProductDto updateProduct(ProductDto productDto) {
-        Product product = getProductById(productDto.getProductId());
-            return mapper.toProductDto(storeRepository.save(product));
+        getProductById(productDto.getProductId());
+            return mapper.toProductDto(storeRepository.save(mapper.toProduct(productDto)));
     }
 
     @Transactional
     @Override
-    public boolean removeProductFromStore(String productId) {
+    public boolean removeProductFromStore(UUID productId) {
         Product product = getProductById(productId);
         product.setProductState(ProductState.DEACTIVATE);
         storeRepository.save(product);
@@ -67,19 +69,22 @@ public class StoreServiceImpl implements StoreService{
     @Override
     public boolean updateProductQuantityState(SetProductQuantityStateRequest request) {
         Product product = getProductById(request.getProductId());
+        if (product.getQuantityState().equals(request.getQuantityState())) {
+            return false;
+        }
         product.setQuantityState(request.getQuantityState());
         storeRepository.save(product);
-        return false;
+        return true;
     }
 
     @Override
-    public ProductDto getInfoProductById(String productId) {
+    public ProductDto getInfoProductById(UUID productId) {
         Product product = getProductById(productId);
         return mapper.toProductDto(product);
     }
 
-    private Product getProductById(String productId) {
-        Optional<Product> product = Optional.ofNullable(storeRepository.findByProductId(productId)
+    private Product getProductById(UUID productId) {
+        Optional<Product> product = Optional.ofNullable(storeRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Товар с таким productId не найден")));
         return product.get();
     }

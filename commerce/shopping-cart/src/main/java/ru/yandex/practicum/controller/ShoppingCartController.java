@@ -18,15 +18,15 @@ public class ShoppingCartController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping
-    public ShoppingCartDto getShoppingCart(@RequestParam String userId) {
-        return cartService.getShoppingCart(userId);
+    public ShoppingCartDto getShoppingCart(@RequestParam String username) {
+        return cartService.getShoppingCart(username);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @PutMapping
-    public ShoppingCartDto addToShoppingCart(@RequestParam String userId,
+    public ShoppingCartDto addToShoppingCart(@RequestParam String username,
                                              @RequestBody Map<String, Long> products) {
-        return cartService.addToShoppingCart(userId, products);
+        return cartService.addToShoppingCart(username, products);
     }
 
     @ResponseStatus(HttpStatus.OK)

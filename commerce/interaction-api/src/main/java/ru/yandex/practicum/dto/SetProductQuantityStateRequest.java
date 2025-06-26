@@ -1,12 +1,20 @@
 package ru.yandex.practicum.dto;
 
+import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
+import lombok.Data;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import ru.yandex.practicum.type.QuantityState;
 
-@Getter
-@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
+import java.util.UUID;
+
+@Data
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class SetProductQuantityStateRequest {
-    String productId;
+    @NotNull
+    UUID productId;
+
+    @NotNull
     QuantityState quantityState;
 }
