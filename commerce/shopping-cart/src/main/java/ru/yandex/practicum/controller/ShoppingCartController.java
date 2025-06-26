@@ -7,7 +7,9 @@ import ru.yandex.practicum.dto.ChangeProductQuantityRequest;
 import ru.yandex.practicum.dto.ShoppingCartDto;
 import ru.yandex.practicum.service.CartService;
 
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/shopping-cart")
@@ -25,7 +27,7 @@ public class ShoppingCartController {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping
     public ShoppingCartDto addToShoppingCart(@RequestParam String username,
-                                             @RequestBody Map<String, Long> products) {
+                                             @RequestBody Map<UUID, Long> products) {
         return cartService.addToShoppingCart(username, products);
     }
 
@@ -38,7 +40,7 @@ public class ShoppingCartController {
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/remove")
     public ShoppingCartDto changeCart(@RequestParam String username,
-                              @RequestBody Map<String, Long> items) {
+                              @RequestBody List<UUID> items) {
         return cartService.changeCart(username, items);
     }
 

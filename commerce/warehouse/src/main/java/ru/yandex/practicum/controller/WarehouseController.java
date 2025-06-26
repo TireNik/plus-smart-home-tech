@@ -3,6 +3,7 @@ package ru.yandex.practicum.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.dto.*;
 import ru.yandex.practicum.service.WarehouseService;
@@ -23,7 +24,9 @@ public class WarehouseController {
     }
 
     @ResponseStatus(HttpStatus.OK)
-    @PostMapping("/check")
+    @PostMapping(value = "/check",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public BookedProductsDto checkShoppingCart(@RequestBody ShoppingCartDto shoppingCartDto) {
         return warehouseService.checkShoppingCart(shoppingCartDto);
     }

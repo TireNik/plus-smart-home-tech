@@ -2,17 +2,25 @@ package ru.yandex.practicum.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AccessLevel;
-import lombok.Getter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-@Getter
+import java.util.UUID;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NewProductInWarehouseRequest {
-    String productId;
-    boolean fragile;
-    DimensionDto dimension;
     @NotBlank
-    @Min(value = 1)
+    UUID productId;
+
+    Boolean fragile;
+
+    @NotBlank
+    DimensionDto dimension;
+
+    @NotBlank
+    @Min(value = 1, message = "Вес не может быть меньше 1")
     Double weight;
 }

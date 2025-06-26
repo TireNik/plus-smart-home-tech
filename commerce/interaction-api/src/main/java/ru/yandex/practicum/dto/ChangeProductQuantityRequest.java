@@ -1,18 +1,18 @@
 package ru.yandex.practicum.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
-import lombok.AccessLevel;
-import lombok.Getter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-@Getter
+import java.util.UUID;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ChangeProductQuantityRequest {
-    @NotBlank
-    String productId;
+    UUID productId;
 
-    @NotBlank
-    @PositiveOrZero
+    @PositiveOrZero(message = "Количество товара должно быть больше нуля")
     Long newQuantity;
 }

@@ -1,29 +1,33 @@
 package ru.yandex.practicum.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "warehouse_product")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class WarehouseProduct {
     @Id
-    @Column(name = "product_id", nullable = false)
-    String productId;
-    @Column(name = "quantity", nullable = false)
-    int quantity;
+    @Column(name = "product_id", nullable = false, unique = true)
+    UUID productId;
+
     @Column(name = "fragile", nullable = false)
     boolean fragile;
-    @Column(name = "weight", nullable = false)
-    double weight;
+
     @Embedded
     Size dimension;
+
+    @Column(name = "weight", nullable = false)
+    Double weight;
+
+    @Column(name = "quantity")
+    long quantity;
 }

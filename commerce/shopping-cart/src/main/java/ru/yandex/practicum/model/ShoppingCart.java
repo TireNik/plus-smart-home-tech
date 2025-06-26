@@ -1,29 +1,35 @@
 package ru.yandex.practicum.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Entity
 @Table(name = "shopping_cart")
 @Getter
 @Setter
-@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ShoppingCart {
     @Id
+    @Column(name = "shopping_cart_id")
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "shopping_cart_id", nullable = false)
-    String shoppingCartId;
+    UUID shoppingCartId;
+
     @Column(name = "username", nullable = false)
     String username;
-    @Column(name = "cart_state", nullable = false)
-    boolean cartState;
-    @ElementCollection
-    @CollectionTable(name = "shopping_cart_products", joinColumns = @JoinColumn(name = "cart_id"))
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "cart_items", joinColumns = @JoinColumn(name = "cart_id"))
     @MapKeyColumn(name = "product_id")
     @Column(name = "quantity")
-    Map<String, Long> products;
+    Map<UUID, Long> products;
+
+    @Column(name = "is_active")
+    Boolean isActive = true;
 }

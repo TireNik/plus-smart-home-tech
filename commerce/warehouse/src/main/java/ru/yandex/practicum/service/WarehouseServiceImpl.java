@@ -8,13 +8,12 @@ import ru.yandex.practicum.exeption.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.exeption.ProductInShoppingCartLowQuantityInWarehouse;
 import ru.yandex.practicum.exeption.SpecifiedProductAlreadyInWarehouseException;
 import ru.yandex.practicum.mapper.WarehouseMapper;
-import ru.yandex.practicum.model.Size;
 import ru.yandex.practicum.model.WarehouseProduct;
 import ru.yandex.practicum.repository.WarehouseRepository;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +24,7 @@ public class WarehouseServiceImpl implements WarehouseService {
     private final WarehouseMapper warehouseMapper;
 
     @Override
+    @Transactional
     public void createProductInWarehouse(NewProductInWarehouseRequest newProduct) {
         Optional<WarehouseProduct> product = warehouseRepository.findById(newProduct.getProductId());
         if (product.isPresent())
@@ -35,50 +35,41 @@ public class WarehouseServiceImpl implements WarehouseService {
     @Transactional
     @Override
     public BookedProductsDto checkShoppingCart(ShoppingCartDto shoppingCartDto) {
-        Map<String, Long> products = shoppingCartDto.getProducts();
-        List<WarehouseProduct> warehouseProducts = warehouseRepository.findAllById(products.keySet());
-        warehouseProducts.forEach(product -> {
-            if (product.getQuantity() <= products.get(product.getProductId())) {
-                throw new ProductInShoppingCartLowQuantityInWarehouse("Невозможно оформить заказ, недостаточно товара");
+        boolean hasFragile = false;
+        double totalVolume = 0;
+        double totalWeight = 0;
+
+        for (Map.Entry<UUID, Long> entry : shoppingCartDto.getProducts().entrySet()) {
+            UUID productId = entry.getKey();
+            Long requestedQuantity = entry.getValue();
+            WarehouseProduct product = findProductById(productId);
+            if (product.getQuantity() < requestedQuantity) {
+                throw new ProductInShoppingCartLowQuantityInWarehouse(
+                        "Не хватает на складе товара с id = " + productId);
             }
-        });
-
-        double deliveryWeight = warehouseProducts.stream()
-                .map(WarehouseProduct::getWeight)
-                .mapToDouble(Double::doubleValue)
-                .sum();
-
-        double deliveryVolume = warehouseProducts.stream()
-                .map(warehouseProduct -> warehouseProduct.getDimension().getDepth()
-                        * warehouseProduct.getDimension().getWidth() * warehouseProduct.getDimension().getHeight())
-                .mapToDouble(Double::doubleValue)
-                .sum();
-
-        boolean fragile = warehouseProducts.stream()
-                .anyMatch(WarehouseProduct::isFragile);
+            if (product.isFragile()) {
+                hasFragile = true;
+            }
+            double productVolume = product.getDimension().getWidth()
+                    * product.getDimension().getHeight()
+                    * product.getDimension().getDepth();
+            totalVolume += productVolume * requestedQuantity;
+            totalWeight += product.getWeight() * requestedQuantity;
+        }
 
         return BookedProductsDto.builder()
-                .deliveryWeight(deliveryWeight)
-                .deliveryVolume(deliveryVolume)
-                .fragile(fragile)
+                .fragile(hasFragile)
+                .deliveryVolume(totalVolume)
+                .deliveryWeight(totalWeight)
                 .build();
     }
 
     @Transactional
     @Override
     public void addProductToWarehouse(AddProductToWarehouseRequest request) {
-        WarehouseProduct warehouseProduct = warehouseRepository.findById(request.getProductId())
-                .orElseGet(() -> {
-                    WarehouseProduct newProduct = new WarehouseProduct();
-                    newProduct.setProductId(request.getProductId());
-                    newProduct.setQuantity(0);
-                    newProduct.setFragile(false);
-                    newProduct.setWeight(0.0);
-                    newProduct.setDimension(new Size(0.0, 0.0, 0.0));
-                    return newProduct;
-                });
-        warehouseProduct.setQuantity(warehouseProduct.getQuantity() + request.getQuantity());
-        warehouseRepository.save(warehouseProduct);
+        WarehouseProduct product = findProductById(request.getProductId());
+        product.setQuantity(product.getQuantity() + request.getQuantity());
+        warehouseRepository.save(product);
     }
 
     @Override
@@ -90,5 +81,11 @@ public class WarehouseServiceImpl implements WarehouseService {
                 .house("10")
                 .flat("1")
                 .build();
+    }
+
+    private WarehouseProduct findProductById(UUID productId) {
+        return warehouseRepository.findById(productId)
+                .orElseThrow(() -> new NoSpecifiedProductInWarehouseException(
+                        "Не найден на складе товар с id = " + productId));
     }
 }

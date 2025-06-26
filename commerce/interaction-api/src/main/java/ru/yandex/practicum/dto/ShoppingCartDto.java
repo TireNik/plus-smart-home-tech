@@ -1,16 +1,20 @@
 package ru.yandex.practicum.dto;
 
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Data;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Builder
 public class ShoppingCartDto {
-    String shoppingCartId;
-    Map<String, Long> products;
+    @NotNull
+    UUID shoppingCartId;
+
+    @NotNull
+    Map<UUID, Long> products;
 }

@@ -1,12 +1,21 @@
 package ru.yandex.practicum.dto;
 
-import lombok.Builder;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class BookedProductsDto {
+    @NotBlank
     Double deliveryWeight;
+
+    @NotBlank
     Double deliveryVolume;
+
+    @NotBlank
     Boolean fragile;
 }

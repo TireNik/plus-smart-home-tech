@@ -12,86 +12,96 @@ import ru.yandex.practicum.model.ShoppingCart;
 import ru.yandex.practicum.repository.CartRepository;
 import ru.yandex.practicum.warehouse.WarehouseClient;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class CartServiceImpl implements CartService{
+public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
     private final CartMapper mapper;
     private final WarehouseClient warehouseClient;
 
     @Override
+    @Transactional(readOnly = true)
     public ShoppingCartDto getShoppingCart(String username) {
         checkUserPresence(username);
-        ShoppingCart cart = cartRepository.findByUsername(username);
-        return mapper.toShoppingCartDto(cart);
+        return cartRepository.findByUsername(username)
+                .map(mapper::toShoppingCartDto)
+                .orElseGet(() -> createNewCartDto(username));
     }
 
     @Transactional
     @Override
-    public ShoppingCartDto addToShoppingCart(String userId, Map<String, Long> products) {
-        ShoppingCartDto shoppingCartDto = ShoppingCartDto.builder()
-                .shoppingCartId(userId)
-                .products(products)
-                .build();
+    public ShoppingCartDto addToShoppingCart(String username, Map<UUID, Long> products) {
+        checkUserPresence(username);
 
-        warehouseClient.checkShoppingCart(shoppingCartDto);
+        Optional<ShoppingCart> shoppingCartOpt = cartRepository.findByUsername(username);
+        ShoppingCart shoppingCart;
 
-        checkUserPresence(userId);
-        ShoppingCart shoppingCart = cartRepository.findByUsername(userId);
+        if (shoppingCartOpt.isPresent()) {
+            shoppingCart = shoppingCartOpt.get();
+            products.forEach((productId, quantity) -> shoppingCart.getProducts().merge(productId, quantity, Long::sum));
 
-        if (shoppingCart == null) {
-            shoppingCart = new ShoppingCart();
-            shoppingCart.setUsername(userId);
-            shoppingCart.setProducts(new HashMap<>());
+        } else {
+            shoppingCart = ShoppingCart.builder().username(username).products(products).isActive(true).build();
         }
 
-        Map<String, Long> currentProducts = shoppingCart.getProducts();
+        warehouseClient.checkShoppingCart(mapper.toShoppingCartDto(shoppingCart));
+        return mapper.toShoppingCartDto(cartRepository.save(shoppingCart));
+    }
 
-        for (Map.Entry<String, Long> entry : products.entrySet()) {
-            String productId = entry.getKey();
-            Long quantityToAdd = entry.getValue();
+    @Transactional
+    @Override
+    public void deleteUserCart(String username) {
+        checkUserPresence(username);
+        cartRepository.findByUsername(username)
+                .ifPresent(shoppingCart -> {
+                    shoppingCart.setIsActive(false);
+                    cartRepository.save(shoppingCart);
+                });
+    }
 
-            currentProducts.merge(productId, quantityToAdd, Long::sum);
+    @Transactional
+    @Override
+    public ShoppingCartDto changeCart(String username, List<UUID> items) {
+        checkUserPresence(username);
+        ShoppingCart cart = findCart(username);
+        for (UUID productId : items) {
+            if (!cart.getProducts().containsKey(productId)) {
+                throw new NoProductsInShoppingCartException("Товар = " + productId + " не найден в корзине");
+            }
+            cart.getProducts().remove(productId);
         }
-        cartRepository.save(shoppingCart);
-
-        return mapper.toShoppingCartDto(shoppingCart);
-    }
-
-    @Transactional
-    @Override
-    public void deleteUserCart(String userId) {
-        checkUserPresence(userId);
-        ShoppingCart cart = cartRepository.findByUsername(userId);
-        cart.setCartState(false);
-        cartRepository.save(cart);
-    }
-
-    @Transactional
-    @Override
-    public ShoppingCartDto changeCart(String userId, Map<String, Long> items) {
-        checkUserPresence(userId);
-        ShoppingCart cart = cartRepository.findByUsername(userId);
-        if (cart == null)
-            throw new NoProductsInShoppingCartException("Отсутствует корзина у пользователя " + userId);
-        cart.setProducts(items);
         return mapper.toShoppingCartDto(cartRepository.save(cart));
     }
 
     @Transactional
     @Override
-    public ShoppingCartDto changeCountProductInCart(String userId, ChangeProductQuantityRequest request) {
-        checkUserPresence(userId);
-        ShoppingCart cart = cartRepository.findByUsername(userId);
+    public ShoppingCartDto changeCountProductInCart(String username, ChangeProductQuantityRequest request) {
+        checkUserPresence(username);
+        ShoppingCart cart = findCart(username);
         if (cart == null || !cart.getProducts().containsKey(request.getProductId()))
-            throw new NoProductsInShoppingCartException("Отсутствует корзина у пользователя " + userId);
+            throw new NoProductsInShoppingCartException("Отсутствует корзина у пользователя " + username);
+
         cart.getProducts().put(request.getProductId(), request.getNewQuantity());
         return mapper.toShoppingCartDto(cartRepository.save(cart));
+    }
+
+    private ShoppingCartDto createNewCartDto(String username) {
+        ShoppingCart newCart = ShoppingCart.builder()
+                .username(username)
+                .isActive(true)
+                .build();
+        cartRepository.save(newCart);
+        return mapper.toShoppingCartDto(newCart);
+    }
+
+    private ShoppingCart findCart(String username) {
+        return cartRepository.findByUsername(username)
+                .orElseThrow(() -> new NoProductsInShoppingCartException("Корзина не найдена для пользователя = " +
+                        username));
     }
 
     private void checkUserPresence(String username) {
@@ -99,3 +109,4 @@ public class CartServiceImpl implements CartService{
             throw new NotAuthorizedUserException("Отсутствует пользователь");
     }
 }
+
