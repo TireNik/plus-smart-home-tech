@@ -1,4 +1,75 @@
 services:
+  postgres:
+    image: postgres:15
+    container_name: analyzer_postgres
+    environment:
+      POSTGRES_DB: analyzer
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "6432:5432"
+    volumes:
+      - analyzer-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d analyzer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- shopping-cart BD ---
+  shopping-cart-postgres:
+    image: postgres:15
+    container_name: shopping_cart_postgres
+    environment:
+      POSTGRES_DB: shopping_cart
+      POSTGRES_USER: shopping
+      POSTGRES_PASSWORD: shopping123
+    ports:
+      - "5434:5432"
+    volumes:
+      - shopping-cart-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shopping -d shopping_cart"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- shopping-store BD ---
+  shopping-store-postgres:
+    image: postgres:15
+    container_name: shopping_store_postgres
+    environment:
+      POSTGRES_DB: shopping_store
+      POSTGRES_USER: store
+      POSTGRES_PASSWORD: store123
+    ports:
+      - "5435:5432"
+    volumes:
+      - shopping-store-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U store -d shopping_store"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- warehouse BD ---
+  warehouse-postgres:
+    image: postgres:15
+    container_name: warehouse_postgres
+    environment:
+      POSTGRES_DB: warehouse
+      POSTGRES_USER: warehouse
+      POSTGRES_PASSWORD: warehouse123
+    ports:
+      - "5436:5432"
+    volumes:
+      - warehouse-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warehouse -d warehouse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   kafka:
     image: confluentinc/confluent-local:7.4.3
     hostname: kafka
@@ -33,3 +104,10 @@ services:
                              --partitions 1 --replication-factor 1 --if-not-exists \
                              --bootstrap-server kafka:29092'"
     init: true
+
+volumes:
+  analyzer-postgres-data:
+  commerce-postgres-data:
+  shopping-cart-postgres-data:
+  shopping-store-postgres-data:
+  warehouse-postgres-data:
