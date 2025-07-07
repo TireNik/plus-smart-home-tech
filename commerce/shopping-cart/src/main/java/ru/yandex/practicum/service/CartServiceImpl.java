@@ -10,7 +10,7 @@ import ru.yandex.practicum.exeption.NotAuthorizedUserException;
 import ru.yandex.practicum.mapper.CartMapper;
 import ru.yandex.practicum.model.ShoppingCart;
 import ru.yandex.practicum.repository.CartRepository;
-import ru.yandex.practicum.warehouse.WarehouseClient;
+import ru.yandex.practicum.feign.WarehouseClient;
 
 import java.util.*;
 

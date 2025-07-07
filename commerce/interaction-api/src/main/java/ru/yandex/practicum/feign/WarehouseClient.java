@@ -1,4 +1,4 @@
-package ru.yandex.practicum.warehouse;
+package ru.yandex.practicum.feign;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
