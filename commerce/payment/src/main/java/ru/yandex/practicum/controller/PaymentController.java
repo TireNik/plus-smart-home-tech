@@ -22,26 +22,26 @@ public class PaymentController implements PaymentClient {
 
     @Override
     public Double getTotalCost(OrderDto orderDto) throws FeignException {
-        return 0.0;
+        return paymentService.getTotalCost(orderDto);
     }
 
     @Override
     public PaymentDto payment(OrderDto orderDto) throws FeignException {
-        return null;
+        return paymentService.payment(orderDto);
     }
 
     @Override
     public void paymentFailed(UUID paymentId) throws FeignException {
-
+        paymentService.paymentFailed(paymentId);
     }
 
     @Override
     public void paymentSuccess(UUID paymentId) throws FeignException {
-
+        paymentService.paymentSuccess(paymentId);
     }
 
     @Override
     public Double productCost(OrderDto orderDto) throws FeignException {
-        return 0.0;
+        return paymentService.productCost(orderDto);
     }
 }
