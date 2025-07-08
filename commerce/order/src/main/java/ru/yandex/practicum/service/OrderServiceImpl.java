@@ -4,14 +4,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.dto.AssemblyProductsForOrderRequest;
 import ru.yandex.practicum.dto.BookedProductsDto;
 import ru.yandex.practicum.dto.ShoppingCartDto;
+import ru.yandex.practicum.dto.delivery.DeliveryDto;
+import ru.yandex.practicum.dto.delivery.DeliveryState;
 import ru.yandex.practicum.dto.order.CreateNewOrderRequest;
 import ru.yandex.practicum.dto.order.OrderDto;
 import ru.yandex.practicum.dto.order.OrderState;
 import ru.yandex.practicum.dto.order.ProductReturnRequest;
+import ru.yandex.practicum.dto.payment.PaymentDto;
 import ru.yandex.practicum.exeption.NotAuthorizedUserException;
 import ru.yandex.practicum.exeption.order.NoOrderFoundException;
+import ru.yandex.practicum.feign.DeliveryClient;
+import ru.yandex.practicum.feign.PaymentClient;
 import ru.yandex.practicum.feign.ShoppingCartClient;
 import ru.yandex.practicum.feign.WarehouseClient;
 import ru.yandex.practicum.mapper.OrderMapper;
@@ -26,10 +32,13 @@ import java.util.UUID;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class OrderServiceImpl implements OrderService {
 
-    OrderMapper mapper;
-    OrderRepository repository;
-    ShoppingCartClient shoppingCartClient;
-    WarehouseClient warehouseClient;
+    final OrderMapper mapper;
+    final OrderRepository repository;
+    final ShoppingCartClient shoppingCartClient;
+    final WarehouseClient warehouseClient;
+    final DeliveryClient deliveryClient;
+    final PaymentClient paymentClient;
+
     @Override
     public List<OrderDto> getClientOrders(String username) {
         checkUser(username);
@@ -57,12 +66,34 @@ public class OrderServiceImpl implements OrderService {
                 .products(request.getShoppingCart().getProducts())
                 .state(OrderState.NEW)
                 .build();
+        repository.save(order);
 
-        BookedProductsDto bookedProductsDto = warehouseClient.checkShoppingCart(request.getShoppingCart());
+        AssemblyProductsForOrderRequest assemblyRequest = AssemblyProductsForOrderRequest.builder()
+                .orderId(order.getOrderId())
+                .products(request.getShoppingCart().getProducts())
+                .build();
+        BookedProductsDto bookedProductsDto = warehouseClient.assembleProducts(assemblyRequest);
 
+        DeliveryDto deliveryDto = DeliveryDto.builder()
+                .orderId(order.getOrderId())
+                .fromAddress(warehouseClient.getAddress())
+                .toAddress(request.getDeliveryAddress())
+                .deliveryState(DeliveryState.CREATED)
+                .build();
+        deliveryDto = deliveryClient.planDelivery(deliveryDto);
 
+        PaymentDto paymentDto = paymentClient.payment(mapper.toDto(order));
 
-        return null;
+        order.setPaymentId(paymentDto.getPaymentId());
+        order.setDeliveryId(deliveryDto.getDeliveryId());
+        order.setDeliveryWeight(bookedProductsDto.getDeliveryWeight());
+        order.setDeliveryVolume(bookedProductsDto.getDeliveryVolume());
+        order.setFragile(bookedProductsDto.getFragile());
+        order.setTotalPrice(paymentClient.getTotalCost(mapper.toDto(order)));
+        order.setDeliveryPrice(deliveryClient.deliveryCost(mapper.toDto(order)));
+        order.setProductPrice(paymentClient.productCost(mapper.toDto(order)));
+
+        return mapper.toDto(repository.save(order));
     }
 
     @Override
@@ -85,13 +116,16 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderDto calculateDeliveryCost(UUID orderId) {
         Order order = findOrder(orderId);
-        return null;
+        order.setDeliveryPrice(deliveryClient.deliveryCost(mapper.toDto(order)));
+        return mapper.toDto(repository.save(order));
     }
 
     @Override
     @Transactional
     public OrderDto calculateTotalCost(UUID orderId) {
-        return null;
+        Order order = findOrder(orderId);
+        order.setTotalPrice(paymentClient.getTotalCost(mapper.toDto(order)));
+        return mapper.toDto(repository.save(order));
     }
 
     @Override
@@ -106,8 +140,9 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderDto delivery(UUID orderId) {
         Order order = findOrder(orderId);
-
-        return null;
+        deliveryClient.deliverySuccessful(orderId);
+        order.setState(OrderState.DELIVERED);
+        return mapper.toDto(repository.save(order));
     }
 
     @Override
@@ -136,8 +171,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderDto productReturn(ProductReturnRequest request) {
-
-        return null;
+        Order order = findOrder(request.getOrderId());
+        warehouseClient.acceptReturn(request.getProducts());
+        order.setState(OrderState.PRODUCT_RETURNED);
+        return mapper.toDto(repository.save(order));
     }
 
     private Order findOrder(UUID orderId) {

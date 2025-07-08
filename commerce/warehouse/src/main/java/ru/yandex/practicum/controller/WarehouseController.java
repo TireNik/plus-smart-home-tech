@@ -53,16 +53,16 @@ public class WarehouseController implements WarehouseClient {
 
     @Override
     public void acceptReturn(Map<UUID, Long> returnedProducts) throws FeignException {
-
+        warehouseService.acceptReturn(returnedProducts);
     }
 
     @Override
     public BookedProductsDto assembleProducts(AssemblyProductsForOrderRequest request) throws FeignException {
-        return null;
+        return warehouseService.assembleProducts(request);
     }
 
     @Override
     public void shipToDelivery(ShippedToDeliveryRequest request) throws FeignException {
-
+        warehouseService.shipToDelivery(request);
     }
 }
