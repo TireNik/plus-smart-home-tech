@@ -1,5 +1,6 @@
 package ru.yandex.practicum.service;
 
+import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,12 +9,16 @@ import ru.yandex.practicum.exeption.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.exeption.ProductInShoppingCartLowQuantityInWarehouse;
 import ru.yandex.practicum.exeption.SpecifiedProductAlreadyInWarehouseException;
 import ru.yandex.practicum.mapper.WarehouseMapper;
+import ru.yandex.practicum.model.OrderBooking;
 import ru.yandex.practicum.model.WarehouseProduct;
+import ru.yandex.practicum.repository.OrderBookingRepository;
 import ru.yandex.practicum.repository.WarehouseRepository;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +27,7 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     private final WarehouseRepository warehouseRepository;
     private final WarehouseMapper warehouseMapper;
+    private final OrderBookingRepository orderBookingRepository;
 
     @Override
     @Transactional
@@ -81,6 +87,45 @@ public class WarehouseServiceImpl implements WarehouseService {
                 .house("10")
                 .flat("1")
                 .build();
+    }
+
+    @Override
+    public void shipToDelivery(ShippedToDeliveryRequest request) {
+        OrderBooking orderBooking = orderBookingRepository.findById(request.getOrderId())
+                .orElseThrow(() -> new NotFoundException("Не найдено бронирование с id = " + request.getOrderId()));
+        orderBooking.setDeliveryId(request.getDeliveryId());
+        orderBookingRepository.save(orderBooking);
+    }
+
+    @Override
+    @Transactional
+    public void acceptReturn(Map<UUID, Long> returnedProducts) {
+        Map<UUID, WarehouseProduct> products = warehouseRepository.findAllById(returnedProducts.keySet()).stream()
+                .collect(Collectors.toMap(WarehouseProduct::getProductId, Function.identity()));
+        for (Map.Entry<UUID, Long> entry : returnedProducts.entrySet()) {
+            if (!products.containsKey(entry.getKey())) {
+                throw new NotFoundException("Товар с id = " + entry.getKey() + " не найден на складе");
+            }
+            WarehouseProduct warehouseProduct = products.get(entry.getKey());
+            warehouseProduct.setQuantity(warehouseProduct.getQuantity() + entry.getValue());
+        }
+        warehouseRepository.saveAll(products.values());
+    }
+
+    @Override
+    @Transactional
+    public BookedProductsDto assembleProducts(AssemblyProductsForOrderRequest request) {
+        ShoppingCartDto shoppingCart = ShoppingCartDto.builder()
+                .shoppingCartId(request.getOrderId())
+                .products(request.getProducts())
+                .build();
+        BookedProductsDto bookedProductsDto = checkShoppingCart(shoppingCart);
+        OrderBooking orderBooking = OrderBooking.builder()
+                .orderId(request.getOrderId())
+                .products(request.getProducts())
+                .build();
+        orderBookingRepository.save(orderBooking);
+        return bookedProductsDto;
     }
 
     private WarehouseProduct findProductById(UUID productId) {
